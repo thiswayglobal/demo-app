@@ -1,0 +1,43 @@
+name: Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "*"
+
+env:
+  ECR: 912076471667.dkr.ecr.us-east-1.amazonaws.com/thiswayglobal-demo-app
+  ROLE: "arn:aws:iam::912076471667:role/github-ecr-thiswayglobal-demo-app"
+
+jobs:
+  build:
+    name: Build Image
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+   
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Expose git commit data
+      uses: rlespinasse/git-commit-data-action@v1
+
+    - name: Set tag env
+      run: |
+        echo "TAG=${ECR}:${{ github.run_number }}" >> $GITHUB_ENV
+
+    - name: Docker build
+      run: |
+        docker build -t $TAG .
+
+    - name: Push to ECR and Argo
+      uses: ./.github/actions/argo-push
+      with:
+        aws-role: ${{ env.ROLE }}
+        aws-ecr-uri: ${{ env.ECR }}
+        ssh-key: ${{ secrets.ARGOCD_REPO_SSH }}
+        service: demo_app
+        image: ${{ env.TAG }}
