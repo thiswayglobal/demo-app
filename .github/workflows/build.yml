@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - "*"
+    tags:
+      - "*"
 
 env:
   ECR: 912076471667.dkr.ecr.us-east-1.amazonaws.com/thiswayglobal-demo-app
